@@ -13,7 +13,6 @@ import {
   Plus,
   Save,
   Search,
-  Sparkles,
   Trash2,
   Trophy,
   X
@@ -101,6 +100,7 @@ function App() {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [majorFilter, setMajorFilter] = useState('All');
+  const [activeView, setActiveView] = useState('board');
 
   function persist(nextSchools) {
     setSchools(nextSchools);
@@ -124,11 +124,13 @@ function App() {
     persist(nextSchools);
     setEditingId(null);
     setForm(emptySchool);
+    setActiveView('board');
   }
 
   function editSchool(school) {
     setEditingId(school.id);
     setForm({ ...school });
+    setActiveView('add');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -170,201 +172,95 @@ function App() {
     ];
   }, [schools]);
 
+  const visibleSchools =
+    activeView === 'offers'
+      ? filteredSchools.filter((school) => school.status === 'Offer')
+      : filteredSchools;
+
   return (
-    <main>
-      <section className="hero">
-        <div className="hero__copy">
-          <span className="eyebrow">
-            <Sparkles size={16} />
-            Transfer portal board
-          </span>
-          <h1>College Baseball School Organizer</h1>
-          <p>
-            Compare coaches, offers, fit, costs, majors, and the next move for every program
-            recruiting you.
-          </p>
+    <>
+      <header className="app-header">
+        <div className="brand">
+          <h1>Portal School Organizer</h1>
+          <p>College baseball transfer board</p>
         </div>
 
-        <div className="stat-grid" aria-label="Recruiting board summary">
+        <nav className="tabs" aria-label="Organizer views">
+          <button
+            className={activeView === 'board' ? 'tab tab--active' : 'tab'}
+            onClick={() => setActiveView('board')}
+          >
+            Board
+          </button>
+          <button
+            className={activeView === 'add' ? 'tab tab--active' : 'tab'}
+            onClick={() => setActiveView('add')}
+          >
+            Add School
+          </button>
+          <button
+            className={activeView === 'offers' ? 'tab tab--active' : 'tab'}
+            onClick={() => setActiveView('offers')}
+          >
+            Offers
+          </button>
+        </nav>
+      </header>
+
+      <main className="page">
+        <section className="summary-strip" aria-label="Recruiting board summary">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
-              <article className="stat" key={stat.label}>
+              <article className="summary-item" key={stat.label}>
                 <Icon size={20} />
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
+                <div>
+                  <strong>{stat.value}</strong>
+                  <span>{stat.label}</span>
+                </div>
               </article>
             );
           })}
-        </div>
-      </section>
+        </section>
 
-      <section className="workspace">
-        <form className="school-form" onSubmit={submitSchool}>
-          <div className="section-title">
-            <div>
-              <span className="kicker">{editingId ? 'Update school' : 'Add school'}</span>
-              <h2>{editingId ? form.name : 'New program'}</h2>
-            </div>
-            {editingId && (
-              <button
-                type="button"
-                className="icon-button"
-                aria-label="Cancel editing"
-                onClick={() => {
-                  setEditingId(null);
-                  setForm(emptySchool);
-                }}
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-
-          <label>
-            School
-            <input
-              value={form.name}
-              onChange={(event) => setForm({ ...form, name: event.target.value })}
-              placeholder="University name"
-            />
-          </label>
-
-          <div className="form-grid">
-            <label>
-              Status
-              <select
-                value={form.status}
-                onChange={(event) => setForm({ ...form, status: event.target.value })}
-              >
-                <option>Interested</option>
-                <option>Call Scheduled</option>
-                <option>Visit Planned</option>
-                <option>Offer</option>
-                <option>Committed</option>
-                <option>Passed</option>
-              </select>
-            </label>
-            <label>
-              Conference
-              <input
-                value={form.conference}
-                onChange={(event) => setForm({ ...form, conference: event.target.value })}
-                placeholder="SEC, ACC, Sun Belt..."
-              />
-            </label>
-          </div>
-
-          <div className="form-grid">
-            <label>
-              Athletic offer
-              <input
-                value={form.athleticOffer}
-                onChange={(event) => setForm({ ...form, athleticOffer: event.target.value })}
-                placeholder="$ amount or pending"
-              />
-            </label>
-            <label>
-              Academic offer
-              <input
-                value={form.academicOffer}
-                onChange={(event) => setForm({ ...form, academicOffer: event.target.value })}
-                placeholder="$ amount"
-              />
-            </label>
-          </div>
-
-          <div className="form-grid">
-            <label>
-              Distance from home
-              <input
-                type="number"
-                min="0"
-                value={form.distance}
-                onChange={(event) => setForm({ ...form, distance: event.target.value })}
-                placeholder="Miles"
-              />
-            </label>
-            <label>
-              Cost of attendance
-              <input
-                value={form.cost}
-                onChange={(event) => setForm({ ...form, cost: event.target.value })}
-                placeholder="After aid"
-              />
-            </label>
-          </div>
-
-          <div className="form-grid">
-            <label>
-              Living situation
-              <input
-                value={form.living}
-                onChange={(event) => setForm({ ...form, living: event.target.value })}
-                placeholder="Dorms, apartment, stipend..."
-              />
-            </label>
-            <label>
-              Coach contact
-              <input
-                value={form.coach}
-                onChange={(event) => setForm({ ...form, coach: event.target.value })}
-                placeholder="Coach name"
-              />
-            </label>
-          </div>
-
-          <label className="check-row">
-            <input
-              type="checkbox"
-              checked={form.hasMajor}
-              onChange={(event) => setForm({ ...form, hasMajor: event.target.checked })}
-            />
-            <span>Has computer science major</span>
-          </label>
-
-          <label>
-            Next step
-            <input
-              value={form.nextStep}
-              onChange={(event) => setForm({ ...form, nextStep: event.target.value })}
-              placeholder="Call, transcript, visit, deadline..."
-            />
-          </label>
-
-          <label>
-            Notes
-            <textarea
-              value={form.notes}
-              onChange={(event) => setForm({ ...form, notes: event.target.value })}
-              placeholder="Fit, playing time, roster needs, admissions details..."
-            />
-          </label>
-
-          <button className="primary-action" type="submit">
-            {editingId ? <Save size={18} /> : <Plus size={18} />}
-            {editingId ? 'Save program' : 'Add program'}
-          </button>
-        </form>
-
-        <section className="board">
-          <div className="toolbar">
-            <label className="search-box">
-              <Search size={18} />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search schools, coaches, conferences"
-              />
-            </label>
-            <div className="filter-group">
-              <label>
-                <Filter size={16} />
-                <select
-                  value={statusFilter}
-                  onChange={(event) => setStatusFilter(event.target.value)}
+        {activeView === 'add' && (
+          <form className="school-form" onSubmit={submitSchool}>
+            <div className="section-title">
+              <div>
+                <span className="kicker">{editingId ? 'Update school' : 'Add school'}</span>
+                <h2>{editingId ? form.name : 'New program'}</h2>
+              </div>
+              {editingId && (
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label="Cancel editing"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm(emptySchool);
+                  }}
                 >
-                  <option>All</option>
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+
+            <label>
+              School
+              <input
+                value={form.name}
+                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                placeholder="University name"
+              />
+            </label>
+
+            <div className="form-grid">
+              <label>
+                Status
+                <select
+                  value={form.status}
+                  onChange={(event) => setForm({ ...form, status: event.target.value })}
+                >
                   <option>Interested</option>
                   <option>Call Scheduled</option>
                   <option>Visit Planned</option>
@@ -372,75 +268,251 @@ function App() {
                   <option>Committed</option>
                   <option>Passed</option>
                 </select>
-                <ChevronDown size={16} />
               </label>
               <label>
-                <GraduationCap size={16} />
-                <select
-                  value={majorFilter}
-                  onChange={(event) => setMajorFilter(event.target.value)}
-                >
-                  <option>All</option>
-                  <option>Computer science</option>
-                  <option>No CS major</option>
-                </select>
-                <ChevronDown size={16} />
+                Conference
+                <input
+                  value={form.conference}
+                  onChange={(event) => setForm({ ...form, conference: event.target.value })}
+                  placeholder="SEC, ACC, Sun Belt..."
+                />
               </label>
             </div>
-          </div>
 
-          <div className="school-list">
-            {filteredSchools.map((school) => (
-              <article className="school-card" key={school.id}>
-                <div className="card-topline">
-                  <div>
-                    <span className={`status status--${school.status.replace(/\s/g, '').toLowerCase()}`}>
-                      {school.status}
+            <div className="form-grid">
+              <label>
+                Athletic offer
+                <input
+                  value={form.athleticOffer}
+                  onChange={(event) => setForm({ ...form, athleticOffer: event.target.value })}
+                  placeholder="$ amount or pending"
+                />
+              </label>
+              <label>
+                Academic offer
+                <input
+                  value={form.academicOffer}
+                  onChange={(event) => setForm({ ...form, academicOffer: event.target.value })}
+                  placeholder="$ amount"
+                />
+              </label>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Distance from home
+                <input
+                  type="number"
+                  min="0"
+                  value={form.distance}
+                  onChange={(event) => setForm({ ...form, distance: event.target.value })}
+                  placeholder="Miles"
+                />
+              </label>
+              <label>
+                Cost of attendance
+                <input
+                  value={form.cost}
+                  onChange={(event) => setForm({ ...form, cost: event.target.value })}
+                  placeholder="After aid"
+                />
+              </label>
+            </div>
+
+            <div className="form-grid">
+              <label>
+                Living situation
+                <input
+                  value={form.living}
+                  onChange={(event) => setForm({ ...form, living: event.target.value })}
+                  placeholder="Dorms, apartment, stipend..."
+                />
+              </label>
+              <label>
+                Coach contact
+                <input
+                  value={form.coach}
+                  onChange={(event) => setForm({ ...form, coach: event.target.value })}
+                  placeholder="Coach name"
+                />
+              </label>
+            </div>
+
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={form.hasMajor}
+                onChange={(event) => setForm({ ...form, hasMajor: event.target.checked })}
+              />
+              <span>Has computer science major</span>
+            </label>
+
+            <label>
+              Next step
+              <input
+                value={form.nextStep}
+                onChange={(event) => setForm({ ...form, nextStep: event.target.value })}
+                placeholder="Call, transcript, visit, deadline..."
+              />
+            </label>
+
+            <label>
+              Notes
+              <textarea
+                value={form.notes}
+                onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                placeholder="Fit, playing time, roster needs, admissions details..."
+              />
+            </label>
+
+            <button className="primary-action" type="submit">
+              {editingId ? <Save size={18} /> : <Plus size={18} />}
+              {editingId ? 'Save program' : 'Add program'}
+            </button>
+          </form>
+        )}
+
+        {activeView !== 'add' && (
+          <section className="board">
+            <div className="board-heading">
+              <div>
+                <h2>{activeView === 'offers' ? 'Offer comparison' : 'School board'}</h2>
+                <p>
+                  {activeView === 'offers'
+                    ? 'Programs that have made an offer.'
+                    : 'Track every school conversation in one clean view.'}
+                </p>
+              </div>
+              <button className="add-school-button" onClick={() => setActiveView('add')}>
+                <Plus size={18} />
+                Add school
+              </button>
+            </div>
+
+            <div className="toolbar">
+              <label className="search-box">
+                <Search size={18} />
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search schools, coaches, conferences"
+                />
+              </label>
+              <div className="filter-group">
+                <label>
+                  <Filter size={16} />
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option>All</option>
+                    <option>Interested</option>
+                    <option>Call Scheduled</option>
+                    <option>Visit Planned</option>
+                    <option>Offer</option>
+                    <option>Committed</option>
+                    <option>Passed</option>
+                  </select>
+                  <ChevronDown size={16} />
+                </label>
+                <label>
+                  <GraduationCap size={16} />
+                  <select
+                    value={majorFilter}
+                    onChange={(event) => setMajorFilter(event.target.value)}
+                  >
+                    <option>All</option>
+                    <option>Computer science</option>
+                    <option>No CS major</option>
+                  </select>
+                  <ChevronDown size={16} />
+                </label>
+              </div>
+            </div>
+
+            <div className="school-list">
+              {visibleSchools.map((school) => (
+                <article className="school-card" key={school.id}>
+                  <div className="card-topline">
+                    <div>
+                      <span
+                        className={`status status--${school.status.replace(/\s/g, '').toLowerCase()}`}
+                      >
+                        {school.status}
+                      </span>
+                      <h3>{school.name}</h3>
+                      <p>{school.conference || 'Conference TBD'}</p>
+                    </div>
+                    <div className="card-actions">
+                      <button
+                        className="icon-button"
+                        aria-label={`Edit ${school.name}`}
+                        onClick={() => editSchool(school)}
+                      >
+                        <Save size={17} />
+                      </button>
+                      <button
+                        className="icon-button danger"
+                        aria-label={`Delete ${school.name}`}
+                        onClick={() => removeSchool(school.id)}
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="metrics">
+                    <Metric
+                      icon={BadgeDollarSign}
+                      label="Athletic"
+                      value={school.athleticOffer || 'Unknown'}
+                    />
+                    <Metric
+                      icon={GraduationCap}
+                      label="Academic"
+                      value={school.academicOffer || 'Unknown'}
+                    />
+                    <Metric
+                      icon={Car}
+                      label="Distance"
+                      value={school.distance ? `${school.distance} mi` : 'Unknown'}
+                    />
+                    <Metric icon={Home} label="Living" value={school.living || 'Unknown'} />
+                  </div>
+
+                  <div className="detail-strip">
+                    <span>
+                      <BadgeDollarSign size={15} />
+                      COA: {school.cost || 'Unknown'}
                     </span>
-                    <h3>{school.name}</h3>
-                    <p>{school.conference || 'Conference TBD'}</p>
+                    <span className={school.hasMajor ? 'positive' : 'negative'}>
+                      {school.hasMajor ? <Check size={15} /> : <X size={15} />}
+                      {school.hasMajor ? 'Computer science' : 'No CS major'}
+                    </span>
                   </div>
-                  <div className="card-actions">
-                    <button className="icon-button" aria-label={`Edit ${school.name}`} onClick={() => editSchool(school)}>
-                      <Save size={17} />
-                    </button>
-                    <button className="icon-button danger" aria-label={`Delete ${school.name}`} onClick={() => removeSchool(school.id)}>
-                      <Trash2 size={17} />
-                    </button>
-                  </div>
-                </div>
 
-                <div className="metrics">
-                  <Metric icon={BadgeDollarSign} label="Athletic" value={school.athleticOffer || 'Unknown'} />
-                  <Metric icon={GraduationCap} label="Academic" value={school.academicOffer || 'Unknown'} />
-                  <Metric icon={Car} label="Distance" value={school.distance ? `${school.distance} mi` : 'Unknown'} />
-                  <Metric icon={Home} label="Living" value={school.living || 'Unknown'} />
-                </div>
-
-                <div className="detail-strip">
-                  <span>
-                    <BadgeDollarSign size={15} />
-                    COA: {school.cost || 'Unknown'}
-                  </span>
-                  <span className={school.hasMajor ? 'positive' : 'negative'}>
-                    {school.hasMajor ? <Check size={15} /> : <X size={15} />}
-                    {school.hasMajor ? 'Computer science' : 'No CS major'}
-                  </span>
-                </div>
-
-                {(school.coach || school.nextStep || school.notes) && (
-                  <div className="notes">
-                    {school.coach && <p><strong>Coach:</strong> {school.coach}</p>}
-                    {school.nextStep && <p><strong>Next:</strong> {school.nextStep}</p>}
-                    {school.notes && <p>{school.notes}</p>}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-      </section>
-    </main>
+                  {(school.coach || school.nextStep || school.notes) && (
+                    <div className="notes">
+                      {school.coach && (
+                        <p>
+                          <strong>Coach:</strong> {school.coach}
+                        </p>
+                      )}
+                      {school.nextStep && (
+                        <p>
+                          <strong>Next:</strong> {school.nextStep}
+                        </p>
+                      )}
+                      {school.notes && <p>{school.notes}</p>}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+    </>
   );
 }
 
